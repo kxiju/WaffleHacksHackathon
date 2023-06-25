@@ -26,16 +26,6 @@ function loadFlag(element){
         }
     }
 }
-function loadName(element){
-    for(let code in country_list){
-        if(code == element.value){ // if currency code of country list is equal to option value
-            let imgTag = element.parentElement.querySelector("img"); // selecting img tag of particular drop list
-            // passing country code of a selected currency code in a img url
-           return country_list[code].toLowerCase();
-          
-        }
-    }
-}
 
 
 window.addEventListener("load", ()=>{
@@ -58,6 +48,7 @@ exchangeIcon.addEventListener("click", ()=>{
 })
 
 function getExchangeRate(){
+    getToCoffeePrice();
     const amount = document.querySelector("form input");
     const exchangeRateTxt = document.querySelector("form .exchange-rate");
     let amountVal = amount.value;
@@ -68,12 +59,10 @@ function getExchangeRate(){
     }
     exchangeRateTxt.innerText = "Getting exchange rate...";
     let url = `https://v6.exchangerate-api.com/v6/5ccbdb10c8d61a589e3777be/latest/${fromCurrency.value}`;
-    const rateArray = [0,"bp","je"];
+    const rateArray = [0," "," "];
 
     // fetching api response and returning it with parsing into js obj and in another then method receiving that obj
     fetch(url).then(response => response.json()).then(result =>{
-
-        console.log(result)
         let exchangeRate = result.conversion_rates[toCurrency.value];
         rateArray[2]=toCurrency;
         rateArray[1]=fromCurrency;
@@ -93,14 +82,64 @@ function getExchangeRate(){
     });
 }
 
+function getFromCoffeePrice(){
+    const amount = document.querySelector("form input");
+    const exchangeRateTxt = document.querySelector("form .exchange-rate");
+    let amountVal = amount.value;
+    // no input or 0 defaults to 1
+    if(amountVal == "" || amountVal == "0"){
+        amount.value = "1";
+        amountVal = 1;
+    }
+    exchangeRateTxt.innerText = "Getting exchange rate...";
+  
+    let url = `https://v6.exchangerate-api.com/v6/5ccbdb10c8d61a589e3777be/latest/${"USD"}`;
+    // getting user selected TO currency rate
+    fetch(url).then(response => response.json()).then(result =>{
+         let exchangeRate = result.conversion_rates[fromCurrency.value];
+        // getting user selected TO currency rate
+        let totalExRate = (amountVal * exchangeRate).toFixed(2); // multiplying user entered value with selected TO currency rate
+        exchangeRateTxt.innerText = `${amountVal} ${fromCurrency.value} = ${totalExRate} ${toCurrency.value}`;
+        document.getElementById("CoffeePrice").innerText = "A cup of coffee would cost " + (exchangeRate * 5).toFixed(2) + " " + fromCurrency.value;
+    }).catch(() =>{ // stops errors from breaking everything
+        exchangeRateTxt.innerText = "Something went wrong";
+    })
+}
+
+function getFromAndToCoffeePrice(){
+    const amount = document.querySelector("form input");
+    const exchangeRateTxt = document.querySelector("form .exchange-rate");
+    let amountVal = amount.value;
+    // no input or 0 defaults to 1
+    if(amountVal == "" || amountVal == "0"){
+        amount.value = "1";
+        amountVal = 1;
+    }
+    exchangeRateTxt.innerText = "Getting exchange rate...";
+  
+    let url = `https://v6.exchangerate-api.com/v6/5ccbdb10c8d61a589e3777be/latest/${"USD"}`;
+
+    // getting api response and returning it with parsing into object
+    fetch(url).then(response => response.json()).then(result =>{
+        console.log(result)
+        let exchangeRate = result.conversion_rates[toCurrency.value];
+        // getting user selected TO currency rate
+        let totalExRate = (amountVal * exchangeRate).toFixed(2); // converting TO currency rate
+        exchangeRateTxt.innerText = `${amountVal} ${fromCurrency.value} = ${totalExRate} ${toCurrency.value}`;
+        document.getElementById("CoffeePrice").innerText = "A cup of coffee would cost " + (exchangeRate * 5).toFixed(2) + " " + toCurrency.value + " or " + getFromCoffeePrice() + " " + fromCurrency.value;
+    }).catch(() =>{ // stops errors from breaking everything
+        exchangeRateTxt.innerText = "Something went wrong";
+    });
+}
+
   google.charts.load("current", {packages:['corechart']});
   google.charts.setOnLoadCallback(drawChart);
   function drawChart(amountVal,rate,fromname,toname) {
     
     var data = google.visualization.arrayToDataTable([
       ["Country", "Rate", { role: "style" } ],
-      [loadName(fromname),parseInt(amountVal) , "#b87333"],
-      [loadName(toname), rate, "silver"],
+      [fromname.value,parseInt(amountVal) , "red"],
+      [toname.value, rate, "purple"],
      
     ]);
 
